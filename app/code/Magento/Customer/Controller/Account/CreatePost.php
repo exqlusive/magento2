@@ -373,7 +373,21 @@ class CreatePost extends AbstractAccount implements CsrfAwareActionInterface, Ht
             $this->checkPasswordConfirmation($password, $confirmation);
 
             $extensionAttributes = $customer->getExtensionAttributes();
-            $extensionAttributes->setIsSubscribed($this->getRequest()->getParam('is_subscribed', false));
+            
+            $email = $this->getRequest()->getParam('email');
+            $subscriber = $this->subscriberFactory->create()->loadByEmail($email);
+
+            if ($subscriber->getId()) {
+                $subscriberStatus = $subscriber->getSubscriberStatus();
+                if ($subscriberStatus === 1) {
+                    /** @var \Magento\Customer\API\Data\CustomerExtension $extensionAttributes */
+                    $extensionAttributes->setIsSubscribed(true);
+                }
+            } else {
+                /** @var \Magento\Customer\API\Data\CustomerExtension $extensionAttributes */
+                $extensionAttributes->setIsSubscribed($this->getRequest()->getParam('is_subscribed', false));
+            }
+
             $customer->setExtensionAttributes($extensionAttributes);
 
             $customer = $this->accountManagement
